@@ -1,0 +1,32 @@
+# 命令执行 docker-compose -f docker-compose-environment.yml up -d
+version: '3.9'
+services:
+  mysql:
+    image: mysql:8.0.32
+    container_name: mysql-go
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 123456
+    ports:
+      - "13306:3306"
+    volumes:
+      - ./mysql/sql:/docker-entrypoint-initdb.d
+    depends_on:
+      - mysql-job-dbdata
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+    volumes_from:
+      - mysql-job-dbdata
+
+  # 自动加载数据
+  mysql-job-dbdata:
+    image: alpine:3.18.2
+    container_name: mysql-job-dbdata
+    volumes:
+      - /var/lib/mysql
